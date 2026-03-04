@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://7rh718sms4.execute-api.us-east-1.amazonaws.com/api';
 
 // Attach Azure AD Bearer token to every request
 export function setAuthToken(token) {
