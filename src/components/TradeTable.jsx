@@ -16,7 +16,7 @@ const COLS = [
   { key: 'capitalAfter', label: 'Capital After' },
 ];
 
-export default function TradeTable({ trades, rawTrades, onEdit, onDelete }) {
+export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmin }) {
   const theme = useTheme();
   const [sortKey, setSortKey]     = useState('id');
   const [sortDir, setSortDir]     = useState(1);
@@ -48,14 +48,9 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete }) {
   return (
     <>
       {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 16, gap: 12, flexWrap: 'wrap',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.3px', color: theme.text }}>
-            Trade Log
-          </h2>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.3px', color: theme.text }}>Trade Log</h2>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: theme.textMuted }}>
             Full capital compounded each trade · 30% tax on profitable exits
           </p>
@@ -65,165 +60,79 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete }) {
             value={filter}
             onChange={e => setFilter(e.target.value)}
             placeholder="Search stock or symbol..."
-            style={{
-              padding: '9px 14px',
-              background: theme.inputBg,
-              border: `1px solid ${theme.inputBorder}`,
-              borderRadius: 10, color: theme.text,
-              fontSize: 13, outline: 'none', width: 220, fontFamily: 'inherit',
-            }}
+            style={{ padding: '9px 14px', background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, color: theme.text, fontSize: 13, outline: 'none', width: 220, fontFamily: 'inherit' }}
           />
-          <button
-            onClick={() => onEdit(null)}
-            style={{
-              padding: '9px 20px', borderRadius: 10, border: 'none',
-              background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentDark})`,
-              color: theme.name === 'dark' ? '#060a0f' : '#ffffff',
-              fontSize: 13, fontWeight: 800, cursor: 'pointer',
-              fontFamily: 'inherit', whiteSpace: 'nowrap',
-              boxShadow: `0 0 20px ${theme.accentGlow}`,
-            }}
-          >+ Add Trade</button>
+          {/* Only admin sees Add Trade button */}
+          {isAdmin && (
+            <button
+              onClick={() => onEdit(null)}
+              style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentDark})`, color: theme.name === 'dark' ? '#060a0f' : '#ffffff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', boxShadow: `0 0 20px ${theme.accentGlow}` }}
+            >+ Add Trade</button>
+          )}
         </div>
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────────────── */}
-      <div style={{
-        background: theme.bgSecondary,
-        border: `1px solid ${theme.border}`,
-        borderRadius: 16, overflow: 'hidden',
-        boxShadow: theme.name === 'light' ? '0 1px 6px rgba(0,0,0,0.07)' : 'none',
-      }}>
+      <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: theme.name === 'light' ? '0 1px 6px rgba(0,0,0,0.07)' : 'none' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: theme.name === 'light' ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
                 {COLS.map(c => (
-                  <th
-                    key={c.key}
-                    onClick={() => handleSort(c.key)}
-                    style={{
-                      padding: '10px 14px', fontSize: 10,
-                      color: sortKey === c.key ? theme.thSortColor : theme.thColor,
-                      letterSpacing: 1.5, textAlign: 'left', fontWeight: 600,
-                      cursor: 'pointer', whiteSpace: 'nowrap',
-                      borderBottom: `1px solid ${theme.border}`,
-                      userSelect: 'none', transition: 'color 0.2s',
-                    }}
-                  >
+                  <th key={c.key} onClick={() => handleSort(c.key)}
+                    style={{ padding: '10px 14px', fontSize: 10, color: sortKey === c.key ? theme.thSortColor : theme.thColor, letterSpacing: 1.5, textAlign: 'left', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: `1px solid ${theme.border}`, userSelect: 'none', transition: 'color 0.2s' }}>
                     {c.label} {sortKey === c.key ? (sortDir === 1 ? '↑' : '↓') : ''}
                   </th>
                 ))}
-                <th style={{
-                  padding: '10px 14px', fontSize: 10, color: theme.thColor,
-                  letterSpacing: 1.5, textAlign: 'left', fontWeight: 600,
-                  borderBottom: `1px solid ${theme.border}`,
-                }}>ACTIONS</th>
+                {/* Only show Actions column for admin */}
+                {isAdmin && (
+                  <th style={{ padding: '10px 14px', fontSize: 10, color: theme.thColor, letterSpacing: 1.5, textAlign: 'left', fontWeight: 600, borderBottom: `1px solid ${theme.border}` }}>ACTIONS</th>
+                )}
               </tr>
             </thead>
-
             <tbody>
               {sorted.map((t, i) => {
                 const win    = t.netPnL > 0;
                 const isOpen = t.status === 'open';
-
                 return (
-                  <tr
-                    key={t.id}
+                  <tr key={t.id}
                     style={{ borderBottom: `1px solid ${theme.trBorder}`, transition: 'background 0.15s' }}
                     onMouseEnter={e => e.currentTarget.style.background = theme.trHover}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    {/* # */}
-                    <td style={{ padding: '14px' }}>
-                      <span style={mono(theme.textFaint)}>{i + 1}</span>
-                    </td>
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
 
-                    {/* Stock name */}
+                    <td style={{ padding: '14px' }}><span style={mono(theme.textFaint)}>{i + 1}</span></td>
+
                     <td style={{ padding: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {isOpen && (
-                          <span style={{
-                            width: 6, height: 6, borderRadius: '50%',
-                            background: theme.accent, display: 'inline-block',
-                            boxShadow: `0 0 8px ${theme.accentGlow}`, flexShrink: 0,
-                          }} />
-                        )}
-                        <span style={{ fontSize: 14, fontWeight: 700, color: theme.text, whiteSpace: 'nowrap' }}>
-                          {t.stockName}
-                        </span>
+                        {isOpen && <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent, display: 'inline-block', boxShadow: `0 0 8px ${theme.accentGlow}`, flexShrink: 0 }} />}
+                        <span style={{ fontSize: 14, fontWeight: 700, color: theme.text, whiteSpace: 'nowrap' }}>{t.stockName}</span>
                       </div>
                     </td>
 
-                    {/* Symbol badge */}
                     <td style={{ padding: '14px' }}>
-                      <span style={{
-                        padding: '3px 10px', borderRadius: 6,
-                        background: theme.purpleSubtle,
-                        border: `1px solid ${theme.purpleBorder}`,
-                        fontSize: 12, fontWeight: 700, color: theme.purple,
-                        fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
-                      }}>
-                        {t.symbol}
-                      </span>
+                      <span style={{ padding: '3px 10px', borderRadius: 6, background: theme.purpleSubtle, border: `1px solid ${theme.purpleBorder}`, fontSize: 12, fontWeight: 700, color: theme.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5 }}>{t.symbol}</span>
                     </td>
 
-                    {/* Entry date */}
-                    <td style={{ padding: '14px' }}>
-                      <span style={mono(theme.textMuted)}>{t.entryDate}</span>
-                    </td>
+                    <td style={{ padding: '14px' }}><span style={mono(theme.textMuted)}>{t.entryDate}</span></td>
+                    <td style={{ padding: '14px' }}><span style={mono(theme.text)}>{fmt(t.entryPrice)}</span></td>
+                    <td style={{ padding: '14px' }}><span style={mono(theme.monoRed)}>{fmt(t.stopLoss)}</span></td>
+                    <td style={{ padding: '14px' }}><span style={mono(isOpen ? theme.textFaint : theme.text)}>{isOpen ? '—' : fmt(t.exitPrice)}</span></td>
 
-                    {/* Entry price */}
-                    <td style={{ padding: '14px' }}>
-                      <span style={mono(theme.text)}>{fmt(t.entryPrice)}</span>
-                    </td>
-
-                    {/* Stop loss */}
-                    <td style={{ padding: '14px' }}>
-                      <span style={mono(theme.monoRed)}>{fmt(t.stopLoss)}</span>
-                    </td>
-
-                    {/* Exit price */}
-                    <td style={{ padding: '14px' }}>
-                      <span style={mono(isOpen ? theme.textFaint : theme.text)}>
-                        {isOpen ? '—' : fmt(t.exitPrice)}
-                      </span>
-                    </td>
-
-                    {/* Net P/L */}
                     <td style={{ padding: '14px' }}>
                       <span style={mono(isOpen ? theme.textFaint : win ? theme.green : theme.red, true)}>
                         {isOpen ? '—' : `${win ? '+' : ''}${fmt(t.netPnL)}`}
                       </span>
                     </td>
 
-                    {/* P/L % badge */}
                     <td style={{ padding: '14px' }}>
                       {isOpen
                         ? <span style={mono(theme.textFaint)}>—</span>
-                        : (
-                          <span style={{
-                            padding: '3px 10px', borderRadius: 6,
-                            background: win ? theme.greenSubtle : theme.redSubtle,
-                            border: `1px solid ${win ? theme.greenBorder : theme.redBorder}`,
-                            fontSize: 12, fontWeight: 700,
-                            color: win ? theme.green : theme.red,
-                            fontFamily: "'JetBrains Mono', monospace",
-                          }}>
-                            {fmtPct(t.pnlMargin)}
-                          </span>
-                        )
+                        : <span style={{ padding: '3px 10px', borderRadius: 6, background: win ? theme.greenSubtle : theme.redSubtle, border: `1px solid ${win ? theme.greenBorder : theme.redBorder}`, fontSize: 12, fontWeight: 700, color: win ? theme.green : theme.red, fontFamily: "'JetBrains Mono', monospace" }}>{fmtPct(t.pnlMargin)}</span>
                       }
                     </td>
 
-                    {/* Tax */}
-                    <td style={{ padding: '14px' }}>
-                      <span style={mono(isOpen || t.tax === 0 ? theme.textFaint : theme.orange)}>
-                        {isOpen || t.tax === 0 ? '—' : fmt(t.tax)}
-                      </span>
-                    </td>
+                    <td style={{ padding: '14px' }}><span style={mono(isOpen || t.tax === 0 ? theme.textFaint : theme.orange)}>{isOpen || t.tax === 0 ? '—' : fmt(t.tax)}</span></td>
 
-                    {/* Capital after */}
                     <td style={{ padding: '14px' }}>
                       {isOpen
                         ? <span style={mono(theme.textFaint)}>In progress</span>
@@ -231,39 +140,22 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete }) {
                       }
                     </td>
 
-                    {/* Actions */}
-                    <td style={{ padding: '14px' }}>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button
-                          onClick={() => onEdit(rawTrades.find(r => r.id === t.id))}
-                          style={{
-                            padding: '5px 12px', borderRadius: 7,
-                            border: `1px solid ${theme.border}`,
-                            background: 'transparent', color: theme.textMuted,
-                            fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
-                          }}
-                        >Edit</button>
-                        <button
-                          onClick={() => setConfirmId(t.id)}
-                          style={{
-                            padding: '5px 12px', borderRadius: 7,
-                            border: `1px solid ${theme.redBorder}`,
-                            background: theme.redBg, color: theme.red,
-                            fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
-                          }}
-                        >Del</button>
-                      </div>
-                    </td>
+                    {/* Edit + Delete — admin only */}
+                    {isAdmin && (
+                      <td style={{ padding: '14px' }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => onEdit(rawTrades.find(r => r.id === t.id))}
+                            style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${theme.border}`, background: 'transparent', color: theme.textMuted, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Edit</button>
+                          <button onClick={() => setConfirmId(t.id)}
+                            style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${theme.redBorder}`, background: theme.redBg, color: theme.red, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Del</button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
-
               {sorted.length === 0 && (
-                <tr>
-                  <td colSpan={12} style={{ padding: '48px', textAlign: 'center', color: theme.textMuted, fontSize: 14 }}>
-                    No trades found. Add your first trade to begin the journey.
-                  </td>
-                </tr>
+                <tr><td colSpan={isAdmin ? 12 : 11} style={{ padding: '48px', textAlign: 'center', color: theme.textMuted, fontSize: 14 }}>No trades found.</td></tr>
               )}
             </tbody>
           </table>
@@ -276,50 +168,18 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete }) {
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent, display: 'inline-block', boxShadow: `0 0 8px ${theme.accentGlow}` }} />
           <span style={{ fontSize: 11, color: theme.textMuted }}>Open position</span>
         </div>
-        <div style={{ fontSize: 11, color: theme.textMuted }}>
-          Tax rate: 30% · Full capital compounding · All figures in USD
-        </div>
+        <div style={{ fontSize: 11, color: theme.textMuted }}>Tax rate: 30% · Full capital compounding · All figures in USD</div>
       </div>
 
-      {/* ── Confirm Delete dialog ────────────────────────────────────────────── */}
-      {confirmId && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 100, backdropFilter: 'blur(4px)',
-        }}>
-          <div style={{
-            background: theme.bgSecondary,
-            border: `1px solid ${theme.redBorder}`,
-            borderRadius: 16, padding: 32,
-            textAlign: 'center', maxWidth: 360,
-          }}>
-            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: theme.text }}>
-              Delete Trade?
-            </div>
-            <p style={{ fontSize: 14, color: theme.textMuted, marginBottom: 24 }}>
-              This will remove the trade and recalculate all subsequent P&L values.
-            </p>
+      {/* ── Confirm Delete ───────────────────────────────────────────────────── */}
+      {isAdmin && confirmId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.redBorder}`, borderRadius: 16, padding: 32, textAlign: 'center', maxWidth: 360 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: theme.text }}>Delete Trade?</div>
+            <p style={{ fontSize: 14, color: theme.textMuted, marginBottom: 24 }}>This will remove the trade and recalculate all subsequent P&L values.</p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setConfirmId(null)}
-                style={{
-                  flex: 1, padding: '11px 0', borderRadius: 10,
-                  border: `1px solid ${theme.border}`,
-                  background: 'transparent', color: theme.textMuted,
-                  fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >Cancel</button>
-              <button
-                onClick={() => { onDelete(confirmId); setConfirmId(null); }}
-                style={{
-                  flex: 1, padding: '11px 0', borderRadius: 10,
-                  border: 'none', background: theme.redSubtle,
-                  color: theme.red, fontSize: 14, fontWeight: 800,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >Delete</button>
+              <button onClick={() => setConfirmId(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: `1px solid ${theme.border}`, background: 'transparent', color: theme.textMuted, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={() => { onDelete(confirmId); setConfirmId(null); }} style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: theme.redSubtle, color: theme.red, fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>Delete</button>
             </div>
           </div>
         </div>

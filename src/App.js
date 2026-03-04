@@ -7,12 +7,15 @@ import TradeModal  from './components/TradeModal';
 import { computeTrades, INITIAL_CAPITAL } from './data';
 import { tradesApi } from './api';
 
+// ─── Theme Context ────────────────────────────────────────────────────────────
 export const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 
+// ─── Theme Tokens ─────────────────────────────────────────────────────────────
 export const themes = {
   dark: {
-    name: 'dark', bg: '#060a0f', bgSecondary: '#0d1117', bgTertiary: 'rgba(255,255,255,0.03)',
+    name: 'dark',
+    bg: '#060a0f', bgSecondary: '#0d1117', bgTertiary: 'rgba(255,255,255,0.03)',
     border: 'rgba(255,255,255,0.07)', borderAccent: 'rgba(0,255,136,0.1)',
     text: '#ffffff', textMuted: '#888888', textFaint: '#444444', textDim: '#555555',
     navBg: 'rgba(6,10,15,0.95)', inputBg: 'rgba(255,255,255,0.04)', inputBorder: 'rgba(255,255,255,0.08)',
@@ -26,7 +29,8 @@ export const themes = {
     thSortColor: '#00ff88', thColor: '#444444', trHover: 'rgba(255,255,255,0.03)', trBorder: 'rgba(255,255,255,0.04)',
   },
   light: {
-    name: 'light', bg: '#f0f4f8', bgSecondary: '#ffffff', bgTertiary: 'rgba(0,0,0,0.02)',
+    name: 'light',
+    bg: '#f0f4f8', bgSecondary: '#ffffff', bgTertiary: 'rgba(0,0,0,0.02)',
     border: 'rgba(0,0,0,0.08)', borderAccent: 'rgba(0,160,80,0.15)',
     text: '#0a1628', textMuted: '#4a5568', textFaint: '#94a3b8', textDim: '#64748b',
     navBg: 'rgba(240,244,248,0.95)', inputBg: 'rgba(0,0,0,0.03)', inputBorder: 'rgba(0,0,0,0.1)',
@@ -41,6 +45,7 @@ export const themes = {
   },
 };
 
+// ─── Global Styles ────────────────────────────────────────────────────────────
 const GlobalStyles = ({ theme }) => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
@@ -58,6 +63,7 @@ const GlobalStyles = ({ theme }) => (
   `}</style>
 );
 
+// ─── Icons ────────────────────────────────────────────────────────────────────
 const SunIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
     <circle cx="12" cy="12" r="5"/>
@@ -73,6 +79,7 @@ const MoonIcon = () => (
   </svg>
 );
 
+// ─── Loading Screen ───────────────────────────────────────────────────────────
 function LoadingScreen({ theme }) {
   return (
     <div style={{ minHeight: '100vh', background: theme.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
@@ -82,6 +89,7 @@ function LoadingScreen({ theme }) {
   );
 }
 
+// ─── Error Banner ─────────────────────────────────────────────────────────────
 function ErrorBanner({ message, theme, onRetry }) {
   return (
     <div style={{ margin: '0 0 20px', padding: '14px 18px', background: theme.redSubtle, border: `1px solid ${theme.redBorder}`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -94,6 +102,7 @@ function ErrorBanner({ message, theme, onRetry }) {
   );
 }
 
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 function ThemedNavbar({ user, onLogout, theme, onToggleTheme }) {
   const iconColor = theme.name === 'dark' ? '#060a0f' : '#ffffff';
   return (
@@ -114,18 +123,28 @@ function ThemedNavbar({ user, onLogout, theme, onToggleTheme }) {
         <button className="theme-toggle" onClick={onToggleTheme}>
           {theme.name === 'dark' ? <><SunIcon /> Light</> : <><MoonIcon /> Dark</>}
         </button>
+        {/* Role badge */}
+        <span style={{
+          padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, letterSpacing: 1,
+          background: user.role === 'admin' ? theme.accentSubtle : theme.purpleSubtle,
+          border: `1px solid ${user.role === 'admin' ? theme.accentBorder : theme.purpleBorder}`,
+          color: user.role === 'admin' ? theme.accentText : theme.purple,
+        }}>
+          {user.role === 'admin' ? 'ADMIN' : 'VIEWER'}
+        </span>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>{user.name}</div>
-          <div style={{ fontSize: 11, color: theme.textDim }}>{user.email}</div>
         </div>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>{user.avatar}</div>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
+          {user.avatar}
+        </div>
         <button onClick={onLogout} style={{ padding: '7px 16px', borderRadius: 8, border: `1px solid ${theme.border}`, background: 'transparent', color: theme.textMuted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Logout</button>
       </div>
     </nav>
   );
 }
 
-// RDS returns snake_case columns — normalize to camelCase for the frontend
+// ─── Normalize RDS snake_case → camelCase ─────────────────────────────────────
 function normalizeFromApi(t) {
   return {
     id:         t.id,
@@ -139,6 +158,7 @@ function normalizeFromApi(t) {
   };
 }
 
+// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser]           = useState(null);
   const [rawTrades, setRawTrades] = useState([]);
@@ -150,6 +170,9 @@ export default function App() {
   const theme       = themes[themeName];
   const toggleTheme = () => setThemeName(n => n === 'dark' ? 'light' : 'dark');
 
+  // isAdmin drives all permission checks in child components
+  const isAdmin = user?.role === 'admin';
+
   const fetchTrades = async () => {
     setLoading(true);
     setError(null);
@@ -157,16 +180,15 @@ export default function App() {
       const data = await tradesApi.getAll();
       setRawTrades(data.map(normalizeFromApi));
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to connect to API. Is the server running on port 4000?');
+      setError(err.response?.data?.error || err.message || 'Failed to connect to API.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (user) fetchTrades();
-  }, [user]);
+  useEffect(() => { if (user) fetchTrades(); }, [user]);
 
+  // ── Auth ──────────────────────────────────────────────────────────────────
   if (!user) {
     return (
       <ThemeContext.Provider value={theme}>
@@ -191,7 +213,9 @@ export default function App() {
     ? closedTrades[closedTrades.length - 1].capitalAfter
     : INITIAL_CAPITAL;
 
+  // ── CRUD — admin only ─────────────────────────────────────────────────────
   const handleSave = async (form) => {
+    if (!isAdmin) return;
     setError(null);
     try {
       if (modal === 'new') {
@@ -202,12 +226,13 @@ export default function App() {
         setRawTrades(prev => prev.map(t => t.id === modal.id ? normalizeFromApi(updated) : t));
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save trade. Check your API connection.');
+      setError(err.response?.data?.error || 'Failed to save trade.');
     }
     setModal(null);
   };
 
   const handleDelete = async (id) => {
+    if (!isAdmin) return;
     setError(null);
     try {
       await tradesApi.delete(id);
@@ -217,7 +242,10 @@ export default function App() {
     }
   };
 
-  const handleEdit = (trade) => setModal(trade === null ? 'new' : trade);
+  const handleEdit = (trade) => {
+    if (!isAdmin) return;
+    setModal(trade === null ? 'new' : trade);
+  };
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -238,10 +266,12 @@ export default function App() {
             rawTrades={rawTrades}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            isAdmin={isAdmin}
           />
         </main>
       </div>
-      {modal !== null && (
+
+      {isAdmin && modal !== null && (
         <TradeModal
           trade={modal === 'new' ? null : modal}
           onClose={() => setModal(null)}
