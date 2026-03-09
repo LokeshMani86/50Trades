@@ -3,17 +3,18 @@ import { fmt, fmtPct } from '../data';
 import { useTheme } from '../App';
 
 const COLS = [
-  { key: 'id',           label: '#'            },
-  { key: 'stockName',    label: 'Stock'         },
-  { key: 'symbol',       label: 'Symbol'        },
-  { key: 'entryDate',    label: 'Entry Date'    },
-  { key: 'entryPrice',   label: 'Entry Price'   },
-  { key: 'stopLoss',     label: 'Stop Loss'     },
-  { key: 'exitPrice',    label: 'Exit Price'    },
-  { key: 'netPnL',       label: 'P/L (Net)'     },
-  { key: 'pnlMargin',    label: 'P/L %'         },
-  { key: 'tax',          label: 'Tax Owed'      },
-  { key: 'capitalAfter', label: 'Capital After' },
+  { key: 'id',            label: '#'                 },
+  { key: 'stockName',     label: 'Stock'             },
+  { key: 'symbol',        label: 'Symbol'            },
+  { key: 'entryDate',     label: 'Entry Date'        },
+  { key: 'capitalBefore', label: 'Capital Allocated' },
+  { key: 'entryPrice',    label: 'Entry Price'       },
+  { key: 'stopLoss',      label: 'Stop Loss'         },
+  { key: 'exitPrice',     label: 'Exit Price'        },
+  { key: 'netPnL',        label: 'P/L (Net)'         },
+  { key: 'pnlMargin',     label: 'P/L %'             },
+  { key: 'tax',           label: 'Tax Owed'          },
+  { key: 'capitalAfter',  label: 'Capital After'     },
 ];
 
 export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmin }) {
@@ -47,7 +48,6 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
 
   return (
     <>
-      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.3px', color: theme.text }}>Trade Log</h2>
@@ -62,7 +62,6 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
             placeholder="Search stock or symbol..."
             style={{ padding: '9px 14px', background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, color: theme.text, fontSize: 13, outline: 'none', width: 220, fontFamily: 'inherit' }}
           />
-          {/* Only admin sees Add Trade button */}
           {isAdmin && (
             <button
               onClick={() => onEdit(null)}
@@ -72,7 +71,6 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
         </div>
       </div>
 
-      {/* ── Table ───────────────────────────────────────────────────────────── */}
       <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: theme.name === 'light' ? '0 1px 6px rgba(0,0,0,0.07)' : 'none' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -84,7 +82,6 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
                     {c.label} {sortKey === c.key ? (sortDir === 1 ? '↑' : '↓') : ''}
                   </th>
                 ))}
-                {/* Only show Actions column for admin */}
                 {isAdmin && (
                   <th style={{ padding: '10px 14px', fontSize: 10, color: theme.thColor, letterSpacing: 1.5, textAlign: 'left', fontWeight: 600, borderBottom: `1px solid ${theme.border}` }}>ACTIONS</th>
                 )}
@@ -113,10 +110,25 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
                       <span style={{ padding: '3px 10px', borderRadius: 6, background: theme.purpleSubtle, border: `1px solid ${theme.purpleBorder}`, fontSize: 12, fontWeight: 700, color: theme.purple, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5 }}>{t.symbol}</span>
                     </td>
 
-                    <td style={{ padding: '14px' }}><span style={mono(theme.textMuted)}>{t.entryDate}</span></td>
-                    <td style={{ padding: '14px' }}><span style={mono(theme.text)}>{fmt(t.entryPrice)}</span></td>
-                    <td style={{ padding: '14px' }}><span style={mono(theme.monoRed)}>{fmt(t.stopLoss)}</span></td>
-                    <td style={{ padding: '14px' }}><span style={mono(isOpen ? theme.textFaint : theme.text)}>{isOpen ? '—' : fmt(t.exitPrice)}</span></td>
+                    <td style={{ padding: '14px' }}>
+                      <span style={mono(theme.textMuted)}>{String(t.entryDate).slice(0, 10)}</span>
+                    </td>
+
+                    <td style={{ padding: '14px' }}>
+                      <span style={mono(theme.accent, true)}>{fmt(t.capitalBefore)}</span>
+                    </td>
+
+                    <td style={{ padding: '14px' }}>
+                      <span style={mono(theme.text)}>{fmt(t.entryPrice)}</span>
+                    </td>
+
+                    <td style={{ padding: '14px' }}>
+                      <span style={mono(theme.monoRed)}>{fmt(t.stopLoss)}</span>
+                    </td>
+
+                    <td style={{ padding: '14px' }}>
+                      <span style={mono(isOpen ? theme.textFaint : theme.text)}>{isOpen ? '—' : fmt(t.exitPrice)}</span>
+                    </td>
 
                     <td style={{ padding: '14px' }}>
                       <span style={mono(isOpen ? theme.textFaint : win ? theme.green : theme.red, true)}>
@@ -131,7 +143,11 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
                       }
                     </td>
 
-                    <td style={{ padding: '14px' }}><span style={mono(isOpen || t.tax === 0 ? theme.textFaint : theme.orange)}>{isOpen || t.tax === 0 ? '—' : fmt(t.tax)}</span></td>
+                    <td style={{ padding: '14px' }}>
+                      <span style={mono(isOpen || t.tax === 0 ? theme.textFaint : theme.orange)}>
+                        {isOpen || t.tax === 0 ? '—' : fmt(t.tax)}
+                      </span>
+                    </td>
 
                     <td style={{ padding: '14px' }}>
                       {isOpen
@@ -140,7 +156,6 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
                       }
                     </td>
 
-                    {/* Edit + Delete — admin only */}
                     {isAdmin && (
                       <td style={{ padding: '14px' }}>
                         <div style={{ display: 'flex', gap: 6 }}>
@@ -155,14 +170,17 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
                 );
               })}
               {sorted.length === 0 && (
-                <tr><td colSpan={isAdmin ? 12 : 11} style={{ padding: '48px', textAlign: 'center', color: theme.textMuted, fontSize: 14 }}>No trades found.</td></tr>
+                <tr>
+                  <td colSpan={isAdmin ? 13 : 12} style={{ padding: '48px', textAlign: 'center', color: theme.textMuted, fontSize: 14 }}>
+                    No trades found.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* ── Legend ──────────────────────────────────────────────────────────── */}
       <div style={{ marginTop: 20, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent, display: 'inline-block', boxShadow: `0 0 8px ${theme.accentGlow}` }} />
@@ -171,7 +189,6 @@ export default function TradeTable({ trades, rawTrades, onEdit, onDelete, isAdmi
         <div style={{ fontSize: 11, color: theme.textMuted }}>Tax rate: 30% · Full capital compounding · All figures in USD</div>
       </div>
 
-      {/* ── Confirm Delete ───────────────────────────────────────────────────── */}
       {isAdmin && confirmId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(4px)' }}>
           <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.redBorder}`, borderRadius: 16, padding: 32, textAlign: 'center', maxWidth: 360 }}>
